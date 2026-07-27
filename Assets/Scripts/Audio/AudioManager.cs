@@ -10,7 +10,6 @@ public class AudioManager : MonoBehaviour
         public string name;
         public AudioClip clip;
         public float volume = 1f;
-        public bool loop = false;
     }
     
     [SerializeField] private List<AudioClip_> audioClips = new();
@@ -31,7 +30,6 @@ public class AudioManager : MonoBehaviour
         
         instance = this;
         DontDestroyOnLoad(gameObject);
-        
         InitializeAudioPool();
         BuildAudioLibrary();
     }
@@ -42,40 +40,26 @@ public class AudioManager : MonoBehaviour
         {
             GameObject audioObj = new($"AudioSource_{i}");
             audioObj.transform.SetParent(transform);
-            
-            AudioSource source = audioObj.AddComponent<AudioSource>();
-            audioSourcePool.Add(source);
+            audioSourcePool.Add(audioObj.AddComponent<AudioSource>());
         }
-        
         Debug.Log($"[AudioManager] Initialized {maxAudioSources} audio sources");
     }
     
     private void BuildAudioLibrary()
     {
         audioLibrary.Clear();
-        
         foreach (var clip in audioClips)
         {
             if (clip.clip != null)
-            {
                 audioLibrary[clip.name] = clip;
-            }
         }
-        
-        Debug.Log($"[AudioManager] Loaded {audioLibrary.Count} audio clips");
     }
     
     public void PlaySFX(string clipName)
     {
-        if (!audioLibrary.TryGetValue(clipName, out var clipData))
-        {
-            Debug.LogWarning($"[AudioManager] Audio clip '{clipName}' not found");
-            return;
-        }
-        
+        if (!audioLibrary.TryGetValue(clipName, out var clipData)) return;
         AudioSource source = GetAvailableAudioSource();
         if (source == null) return;
-        
         source.clip = clipData.clip;
         source.volume = clipData.volume * masterVolume;
         source.spatialBlend = 0f;
@@ -84,12 +68,9 @@ public class AudioManager : MonoBehaviour
     
     public void Play3DSFX(string clipName, Vector3 position)
     {
-        if (!audioLibrary.TryGetValue(clipName, out var clipData))
-            return;
-        
+        if (!audioLibrary.TryGetValue(clipName, out var clipData)) return;
         AudioSource source = GetAvailableAudioSource();
         if (source == null) return;
-        
         source.transform.position = position;
         source.clip = clipData.clip;
         source.volume = clipData.volume * masterVolume;
@@ -99,12 +80,9 @@ public class AudioManager : MonoBehaviour
     
     public void PlayMusic(string clipName)
     {
-        if (!audioLibrary.TryGetValue(clipName, out var clipData))
-            return;
-        
+        if (!audioLibrary.TryGetValue(clipName, out var clipData)) return;
         AudioSource source = GetAvailableAudioSource();
         if (source == null) return;
-        
         source.clip = clipData.clip;
         source.volume = clipData.volume * masterVolume * 0.7f;
         source.loop = true;
@@ -113,10 +91,7 @@ public class AudioManager : MonoBehaviour
     
     public void StopAll()
     {
-        foreach (var source in audioSourcePool)
-        {
-            source.Stop();
-        }
+        foreach (var source in audioSourcePool) source.Stop();
     }
     
     public void SetMasterVolume(float volume)
@@ -127,14 +102,7 @@ public class AudioManager : MonoBehaviour
     private AudioSource GetAvailableAudioSource()
     {
         foreach (var source in audioSourcePool)
-        {
-            if (!source.isPlaying)
-            {
-                return source;
-            }
-        }
-        
-        Debug.LogWarning("[AudioManager] No available audio sources");
+            if (!source.isPlaying) return source;
         return null;
     }
     

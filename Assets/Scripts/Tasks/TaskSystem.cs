@@ -11,7 +11,6 @@ public class TaskSystem : NetworkBehaviour
         public int taskId;
         public Vector3 taskLocation;
         public float completionTime = 5f;
-        public bool isCompleted;
     }
     
     [SerializeField] private TaskData[] allTasks;
@@ -30,7 +29,6 @@ public class TaskSystem : NetworkBehaviour
             Destroy(gameObject);
             return;
         }
-        
         instance = this;
         InitializeTasks();
     }
@@ -45,28 +43,19 @@ public class TaskSystem : NetworkBehaviour
             new TaskData { taskName = "Scan Card", taskId = 4, taskLocation = new Vector3(0, 1, 30), completionTime = 5f },
             new TaskData { taskName = "Verify Scan", taskId = 5, taskLocation = new Vector3(30, 1, 30), completionTime = 4f }
         };
-        
         foreach (var task in allTasks)
-        {
             taskCompletionStatus[task.taskId] = false;
-        }
     }
     
     [Rpc(SendTo.Server)]
     public void CompleteTaskRpc(int taskId)
     {
-        if (!IsServer) return;
-        
-        if (taskCompletionStatus[taskId]) return;
-        
+        if (!IsServer || taskCompletionStatus[taskId]) return;
         taskCompletionStatus[taskId] = true;
         completedTaskCount.Value++;
         globalTaskProgress.Value = (float)completedTaskCount.Value / requiredTasksToWin;
-        
         if (completedTaskCount.Value >= requiredTasksToWin)
-        {
             GameStateManager.Instance.SetGameState(GameStateManager.GameState.GameOver);
-        }
     }
     
     public TaskData[] GetAllTasks() => allTasks;
